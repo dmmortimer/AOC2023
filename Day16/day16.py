@@ -1,4 +1,3 @@
-# PART TWO NOT STARTED
 from aocd import get_data    # https://pypi.org/project/advent-of-code-data/
 import os.path
 
@@ -16,19 +15,14 @@ layout = []
 for line in data.splitlines():
     layout.append(line.strip())
 
-
 num_rows = len(layout)
 num_cols = len(layout[0])
 
 print('layout has',num_rows,'rows',num_cols,'columns')
-energized = [[0 for y in range(num_cols)] for x in range(num_rows)]
-
-# keep track of which direction the light shone at this tile - to prevent light bouncing back and forth forever
-energize_directions = [[[] for y in range(num_cols)] for x in range(num_rows)]
 
 # recursive function that shines from this location, with a beam initially in this direction
 # beam direction is one of (l)eft, (r)ight, (u)p, (d)own
-def shine(x,y,direction):
+def shine(x,y,direction,energized,energize_directions):
 
     # first check if we've gone outside the boundaries
     if x not in range(num_rows) or y not in range(num_cols):
@@ -67,8 +61,8 @@ def shine(x,y,direction):
             case '|':
                 match direction:
                     case 'l' | 'r':
-                        shine(x-1,y,'u')
-                        shine(x+1,y,'d')
+                        shine(x-1,y,'u',energized,energize_directions)
+                        shine(x+1,y,'d',energized,energize_directions)
                         break
                     case 'u':
                         next_x = x-1
@@ -77,8 +71,8 @@ def shine(x,y,direction):
             case '-':
                 match direction:
                     case 'u' | 'd':
-                        shine(x,y-1,'l')
-                        shine(x,y+1,'r')
+                        shine(x,y-1,'l',energized,energize_directions)
+                        shine(x,y+1,'r',energized,energize_directions)
                         break
                     case 'l':
                         next_y = y-1
@@ -120,11 +114,40 @@ def shine(x,y,direction):
         x = next_x
         y = next_y
         direction = next_direction
-        
-shine(0,0,'r')
 
-ans = 0
-for row in energized:
-    ans += sum(row)
+def count_energized_tiles(x,y,direction):
+
+    energized = [[0 for y in range(num_cols)] for x in range(num_rows)]
+
+    # keep track of which direction the light shone at this tile - to prevent light bouncing back and forth forever
+    energize_directions = [[[] for y in range(num_cols)] for x in range(num_rows)]
+            
+    shine(x,y,direction,energized,energize_directions)
+
+    ans = 0
+    for row in energized:
+        ans += sum(row)
+    return ans
+
+ans = count_energized_tiles(0,0,'r')
 
 print('number of energized tiles:',ans)
+
+# part two choose the entry spot that energizes the most tiles
+ans = 0
+for x in range(num_rows):
+    n = count_energized_tiles(x,0,'r')
+    if n>ans:
+        ans = n
+    n = count_energized_tiles(x,num_cols-1,'l')
+    if n>ans:
+        ans = n
+for y in range(num_cols):
+    n = count_energized_tiles(0,y,'d')
+    if n>ans:
+        ans = n
+    n = count_energized_tiles(num_rows-1,y,'u')
+    if n>ans:
+        ans = n
+
+print('maximum number of energized tiles:',ans)
